@@ -1,0 +1,24 @@
+{
+  "name": "MF Cash",
+  "short_name": "MF Cash",
+  "description": "MF Cash - Expense Tracker App",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFC",
+  "theme_color": "#004D40",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
