@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Bell, BellRing, Trash2, CheckCheck } from 'lucide-react';
+import { X, Bell, BellRing, CheckCheck } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -366,350 +366,196 @@ export function useNotification() {
 
 // Notification Panel Component
 export function NotificationPanel() {
-  const { notifications, unreadCount, removeNotification, clearAll, markAsRead, markAllAsRead, isOpen, setIsOpen } = useNotification();
+  const { notifications, unreadCount, removeNotification, markAsRead, markAllAsRead, isOpen, setIsOpen } = useNotification();
+  const isMobile = window.innerWidth < 768;
 
   const getNotificationIcon = (type: 'warning' | 'info' | 'success') => {
     switch (type) {
-      case 'warning':
-        return <BellRing size={20} style={{ color: 'white' }} />;
-      case 'success':
-        return <CheckCheck size={20} style={{ color: 'white' }} />;
-      default:
-        return <Bell size={20} style={{ color: 'white' }} />;
+      case 'warning': return <BellRing size={20} style={{ color: 'white' }} />;
+      case 'success': return <CheckCheck size={20} style={{ color: 'white' }} />;
+      default: return <Bell size={20} style={{ color: 'white' }} />;
     }
   };
 
-  const getNotificationColors = (type: 'warning' | 'info' | 'success') => {
+  const getColors = (type: 'warning' | 'info' | 'success') => {
     switch (type) {
-      case 'warning':
-        return {
-          bg: 'linear-gradient(135deg, #FEF3C7 0%, #FFFBEB 100%)',
-          border: 'border-amber-200',
-          iconBg: 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)',
-          title: 'text-amber-900',
-          message: 'text-amber-700',
-        };
-      case 'success':
-        return {
-          bg: 'linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 100%)',
-          border: 'border-emerald-200',
-          iconBg: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
-          title: 'text-emerald-900',
-          message: 'text-emerald-700',
-        };
-      default:
-        return {
-          bg: 'linear-gradient(135deg, #DBEAFE 0%, #EFF6FF 100%)',
-          border: 'border-blue-200',
-          iconBg: 'linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)',
-          title: 'text-blue-900',
-          message: 'text-blue-700',
-        };
+      case 'warning': return { bg: '#FEF3C7', iconBg: '#F59E0B', title: '#92400E', msg: '#A16207' };
+      case 'success': return { bg: '#D1FAE5', iconBg: '#10B981', title: '#065F46', msg: '#059669' };
+      default: return { bg: '#DBEAFE', iconBg: '#3B82F6', title: '#1E40AF', msg: '#1E3A8A' };
     }
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      <AnimatePresence>
-        {isOpen && (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', zIndex: 9998 }}
+          />
+
+          {/* Centered Panel */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             style={{
               position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 9998,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: isMobile ? 'calc(100% - 24px)' : '420px',
+              maxHeight: isMobile ? 'calc(100vh - 60px)' : 'calc(100vh - 120px)',
+              background: 'var(--surface)',
+              borderRadius: '20px',
+              boxShadow: '0 25px 80px rgba(0,0,0,0.25)',
+              zIndex: 9999,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Panel */}
-      <motion.div
-        initial={{ opacity: 0, y: -20, scale: 0.95 }}
-        animate={{ 
-          opacity: isOpen ? 1 : 0, 
-          y: isOpen ? 0 : -20,
-          scale: isOpen ? 1 : 0.95,
-        }}
-        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        style={{
-          position: 'fixed',
-          top: '70px',
-          right: '20px',
-          width: '400px',
-          maxHeight: 'calc(100vh - 100px)',
-          background: 'var(--surface)',
-          borderRadius: '20px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5)',
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          pointerEvents: isOpen ? 'auto' : 'none',
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--outline-variant)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'linear-gradient(135deg, var(--surface-container) 0%, var(--surface) 100%)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          >
+            {/* Header */}
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dim) 100%)',
+              padding: '20px',
+              borderBottom: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0, 103, 91, 0.3)',
+              justifyContent: 'space-between',
+              background: 'var(--surface)',
             }}>
-              <Bell size={20} style={{ color: 'white' }} />
-            </div>
-            <div>
-              <h2 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: 700, 
-                color: 'var(--on-surface)',
-                margin: 0,
-              }}>
-                Notifications
-              </h2>
-              <p style={{ 
-                fontSize: '0.75rem', 
-                color: 'var(--on-surface-variant)',
-                margin: 0,
-              }}>
-                {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                style={{
-                  padding: '8px 12px',
-                  background: 'var(--primary-container)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'var(--on-primary-container)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(0.95)'}
-                onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
-              >
-                <CheckCheck size={14} />
-                Mark all read
-              </button>
-            )}
-            <button
-              onClick={clearAll}
-              disabled={notifications.length === 0}
-              style={{
-                padding: '8px 12px',
-                background: notifications.length === 0 ? 'var(--surface-container)' : 'var(--error-container)',
-                border: 'none',
-                borderRadius: '8px',
-                color: notifications.length === 0 ? 'var(--on-surface-variant)' : 'var(--on-error-container)',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                cursor: notifications.length === 0 ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                opacity: notifications.length === 0 ? 0.5 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (notifications.length > 0) e.currentTarget.style.filter = 'brightness(0.95)';
-              }}
-              onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
-            >
-              <Trash2 size={14} />
-              Clear all
-            </button>
-          </div>
-        </div>
-
-        {/* Notifications List */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px',
-        }}>
-          {notifications.length === 0 ? (
-            <div style={{
-              padding: '48px 24px',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-            }}>
-              <div style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '20px',
-                background: 'var(--surface-container)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-              }}>
-                <Bell size={36} style={{ opacity: 0.3 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '44px', height: '44px', borderRadius: '12px',
+                  background: 'linear-gradient(135deg, var(--primary-green) 0%, var(--primary-light) 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(0, 77, 64, 0.3)',
+                }}>
+                  <Bell size={22} style={{ color: 'white' }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Notifications</h2>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                    {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+                  </p>
+                </div>
               </div>
-              <p style={{ fontSize: '0.938rem', fontWeight: 600, marginBottom: '4px' }}>
-                No notifications yet
-              </p>
-              <p style={{ fontSize: '0.813rem', opacity: 0.7 }}>
-                When you receive notifications, they'll appear here
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} style={{
+                    padding: '8px 14px', background: 'var(--primary-container)', border: 'none', borderRadius: '8px',
+                    color: 'var(--primary-green)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}>
+                    <CheckCheck size={14} /> Read all
+                  </button>
+                )}
+                <button onClick={() => setIsOpen(false)} style={{
+                  background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '8px',
+                  padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--text-muted)',
+                }}>
+                  <X size={18} />
+                </button>
+              </div>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <AnimatePresence>
-                {notifications.map(notification => {
-                  const colors = getNotificationColors(notification.type);
-                  return (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -100 }}
-                      onClick={() => markAsRead(notification.id)}
-                      style={{
-                        background: colors.bg,
-                        borderRadius: '16px',
-                        padding: '16px',
-                        border: `1px solid ${notification.read ? 'transparent' : 'rgba(0, 0, 0, 0.1)'}`,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        position: 'relative',
-                        overflow: 'hidden',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                    >
-                      {!notification.read && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '12px',
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '4px',
-                          background: 'var(--primary)',
-                          boxShadow: '0 0 0 2px white',
-                        }} />
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                        <div style={{
-                          width: '44px',
-                          height: '44px',
+
+            {/* Notifications List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+              {notifications.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <div style={{
+                    width: '70px', height: '70px', borderRadius: '16px', background: 'var(--background)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px',
+                  }}>
+                    <Bell size={32} style={{ opacity: 0.3 }} />
+                  </div>
+                  <p style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' }}>No notifications</p>
+                  <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Notifications auto-remove after 24 hours</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {notifications.map(notification => {
+                    const colors = getColors(notification.type);
+                    return (
+                      <motion.div
+                        key={notification.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => markAsRead(notification.id)}
+                        style={{
+                          background: colors.bg,
                           borderRadius: '12px',
-                          background: colors.iconBg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                        }}>
-                          {getNotificationIcon(notification.type)}
+                          padding: '14px',
+                          cursor: 'pointer',
+                          position: 'relative',
+                          border: notification.read ? 'none' : '2px solid ' + colors.iconBg,
+                        }}
+                      >
+                        {!notification.read && (
+                          <div style={{
+                            position: 'absolute', top: '10px', right: '10px',
+                            width: '8px', height: '8px', borderRadius: '50%',
+                            background: colors.iconBg,
+                          }} />
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                          <div style={{
+                            width: '40px', height: '40px', borderRadius: '10px',
+                            background: colors.iconBg,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          }}>
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0, paddingRight: '24px' }}>
+                            <p style={{ fontSize: '0.85rem', fontWeight: 700, color: colors.title, margin: '0 0 4px 0' }}>
+                              {notification.title}
+                            </p>
+                            <p style={{ fontSize: '0.8rem', color: colors.msg, lineHeight: 1.4, margin: 0 }}>
+                              {notification.message}
+                            </p>
+                            <p style={{ fontSize: '0.7rem', color: colors.msg, marginTop: '8px', opacity: 0.7, margin: '8px 0 0 0' }}>
+                              {new Date(notification.timestamp).toLocaleDateString('en-IN', {
+                                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); removeNotification(notification.id); }}
+                            style={{
+                              position: 'absolute', bottom: '12px', right: '12px',
+                              background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer',
+                              padding: '6px', borderRadius: '6px', color: colors.msg,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}
+                          >
+                            <X size={14} />
+                          </button>
                         </div>
-                        <div style={{ flex: 1, minWidth: 0, paddingRight: '20px' }}>
-                          <p style={{
-                            fontSize: '0.875rem',
-                            fontWeight: 700,
-                            color: colors.title,
-                            marginBottom: '4px',
-                            margin: '0 0 4px 0',
-                          }}>
-                            {notification.title}
-                          </p>
-                          <p style={{
-                            fontSize: '0.813rem',
-                            color: colors.message,
-                            lineHeight: 1.4,
-                            margin: 0,
-                          }}>
-                            {notification.message}
-                          </p>
-                          <p style={{
-                            fontSize: '0.688rem',
-                            color: colors.message,
-                            marginTop: '8px',
-                            opacity: 0.7,
-                            margin: '8px 0 0 0',
-                          }}>
-                            {new Date(notification.timestamp).toLocaleDateString('en-US', { 
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeNotification(notification.id);
-                          }}
-                          style={{
-                            position: 'absolute',
-                            bottom: '16px',
-                            right: '16px',
-                            background: 'rgba(0, 0, 0, 0.05)',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '6px',
-                            borderRadius: '8px',
-                            color: colors.message,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'all 0.2s',
-                            opacity: 0,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                            e.currentTarget.style.color = '#DC2626';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
-                            e.currentTarget.style.color = colors.message;
-                          }}
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </motion.div>
-    </>
+
+            {/* Footer */}
+            {notifications.length > 0 && (
+              <div style={{
+                padding: '12px 20px', borderTop: '1px solid var(--border)',
+                textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)',
+              }}>
+                Notifications auto-remove after 24 hours
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
