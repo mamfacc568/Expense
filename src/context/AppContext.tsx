@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useState, type ReactNode } from 'react';
 import type { AppState, SubAccount, Expense, Transaction, LedgerEntry, Vendor, ScrapSale, VendorPayment, VendorLedgerEntry } from '../types';
+import { sendExpenseNotification, sendDepositNotification } from '../services/whatsappService';
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
 
@@ -214,7 +215,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const masterBalance = state.deposits;
 
   const depositToMaster = (amount: number, source: string) => {
-    if (amount > 0 && source.trim()) dispatch({ type: 'DEPOSIT_TO_MASTER', payload: { amount, source: source.trim() } });
+    if (amount > 0 && source.trim()) {
+      // Send WhatsApp notification for deposit
+      sendDepositNotification({
+        amount,
+        source: source.trim(),
+        date: new Date().toLocaleDateString('en-IN'),
+      });
+      
+      dispatch({ type: 'DEPOSIT_TO_MASTER', payload: { amount, source: source.trim() } });
+    }
   };
 
   const createSubAccount = (name: string, initialBalance: number = 0) => {
@@ -250,6 +260,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (amount > 0 && description.trim()) {
       const targetAccount = state.subAccounts.find(a => a.id === accountId);
       if (amount >= 10000 && onHighValueExpense && targetAccount) onHighValueExpense(amount, description, targetAccount.name);
+      
+      // Send WhatsApp notification
+      if (targetAccount) {
+        sendExpenseNotification({
+          amount,
+          description: description.trim(),
+          accountName: targetAccount.name,
+          date: date || new Date().toLocaleDateString('en-IN'),
+          category,
+        });
+      }
+      
       dispatch({ type: 'BOOK_EXPENSE', payload: { id: generateId(), accountId, description: description.trim(), amount, category, date, imageUrl, createdAt: new Date() } });
     }
   };
