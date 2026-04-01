@@ -324,7 +324,7 @@ function AppContent() {
               position: 'fixed',
               inset: 0,
               background: 'rgba(0,0,0,0.5)',
-              zIndex: 99,
+              zIndex: 200,
             }}
             onClick={() => setIsMobileMenuOpen(false)}
           >
