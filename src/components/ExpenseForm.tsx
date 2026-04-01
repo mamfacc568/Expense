@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Upload, Image as ImageIcon, Tag, FileText } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Tag, FileText, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import type { SubAccount } from '../types';
 
@@ -13,6 +13,7 @@ interface ExpenseFormProps {
 export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormProps) {
   const { subAccounts, bookExpense } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -392,7 +393,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                       <div>
                         <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: 'var(--spacing-sm)' }} />
                         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-sm)' }}>
-                          Click to upload or drag and drop
+                          Click to upload or capture from camera
                         </p>
                         <input
                           ref={fileInputRef}
@@ -402,25 +403,55 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                           style={{ display: 'none' }}
                           id="imageUpload"
                         />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 'var(--spacing-xs)',
-                            padding: 'var(--spacing-sm) var(--spacing-md)',
-                            background: 'var(--background)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '0.875rem',
-                            color: 'var(--text-secondary)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <Upload size={16} />
-                          Choose File
-                        </button>
+                        <input
+                          ref={cameraInputRef}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={handleImageUpload}
+                          style={{ display: 'none' }}
+                          id="cameraCapture"
+                        />
+                        <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 'var(--spacing-xs)',
+                              padding: 'var(--spacing-sm) var(--spacing-md)',
+                              background: 'var(--background)',
+                              border: '1px solid var(--border)',
+                              borderRadius: 'var(--radius-md)',
+                              fontSize: '0.875rem',
+                              color: 'var(--text-secondary)',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Upload size={16} />
+                            Choose File
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => cameraInputRef.current?.click()}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 'var(--spacing-xs)',
+                              padding: 'var(--spacing-sm) var(--spacing-md)',
+                              background: 'var(--primary-green)',
+                              border: '1px solid var(--primary-green)',
+                              borderRadius: 'var(--radius-md)',
+                              fontSize: '0.875rem',
+                              color: 'white',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Camera size={16} />
+                            Take Photo
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
