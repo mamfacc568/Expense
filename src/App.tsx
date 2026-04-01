@@ -17,7 +17,7 @@ type View = 'dashboard' | 'reconciliation' | 'expenses' | 'scrap' | 'account-led
 type ModalType = 'create' | 'transfer' | 'deposit' | 'expense' | null;
 
 function AppContent() {
-  const { setOnHighValueExpense } = useApp();
+  const { setOnHighValueExpense, setOnHighValueScrap } = useApp();
   const { addNotification, setIsOpen, unreadCount } = useNotification();
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -46,6 +46,17 @@ function AppContent() {
       );
     });
   }, [setOnHighValueExpense, addNotification]);
+
+  // Set up high-value scrap sale notification handler
+  useEffect(() => {
+    setOnHighValueScrap((amount, vendorName) => {
+      addNotification(
+        'High-Value Scrap Sale!',
+        `₹${amount.toLocaleString('en-IN')} scrap sold to ${vendorName}`,
+        'warning'
+      );
+    });
+  }, [setOnHighValueScrap, addNotification]);
 
   const handleSelectAccount = (account: SubAccount) => {
     setSelectedAccount(account);

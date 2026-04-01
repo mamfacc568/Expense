@@ -4,6 +4,7 @@ import type { AppState, SubAccount, Expense, Transaction, LedgerEntry, Vendor, S
 const generateId = () => Math.random().toString(36).substring(2, 11);
 
 type OnHighValueExpenseCallback = (amount: number, description: string, accountName: string) => void;
+type OnHighValueScrapCallback = (amount: number, vendorName: string) => void;
 
 interface AppContextType extends AppState {
   masterBalance: number;
@@ -16,6 +17,7 @@ interface AppContextType extends AppState {
   deleteSubAccount: (accountId: string) => void;
   getAccountLedger: (accountId: string) => LedgerEntry[];
   setOnHighValueExpense: (callback: OnHighValueExpenseCallback) => void;
+  setOnHighValueScrap: (callback: OnHighValueScrapCallback) => void;
   // Scrap functions
   createVendor: (name: string, phone?: string) => void;
   deleteVendor: (vendorId: string) => void;
@@ -207,6 +209,7 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [onHighValueExpense, setOnHighValueExpenseCallback] = useState<OnHighValueExpenseCallback | null>(null);
+  const [onHighValueScrap, setOnHighValueScrapCallback] = useState<OnHighValueScrapCallback | null>(null);
 
   const masterBalance = state.deposits;
 
@@ -268,6 +271,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const setOnHighValueExpense = (callback: OnHighValueExpenseCallback) => setOnHighValueExpenseCallback(() => callback);
+  const setOnHighValueScrap = (callback: OnHighValueScrapCallback) => setOnHighValueScrapCallback(() => callback);
 
   // Scrap functions
   const createVendor = (name: string, phone?: string) => {
@@ -280,7 +284,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const bookScrapSale = (vendorId: string, description: string, amount: number, date: string, weight?: number, rate?: number, imageUrl?: string) => {
-    if (amount > 0 && description.trim()) dispatch({ type: 'BOOK_SCRAP_SALE', payload: { id: generateId(), vendorId, description: description.trim(), amount, date, weight, rate, imageUrl, createdAt: new Date() } });
+    if (amount > 0 && description.trim()) {
+      const vendor = state.vendors.find(v => v.id === vendorId);
+      if (amount >= 10000 && onHighValueScrap && vendor) onHighValueScrap(amount, vendor.name);
+      dispatch({ type: 'BOOK_SCRAP_SALE', payload: { id: generateId(), vendorId, description: description.trim(), amount, date, weight, rate, imageUrl, createdAt: new Date() } });
+    }
   };
 
   const recordVendorPayment = (vendorId: string, amount: number, paymentMethod: 'upi' | 'cash', description: string, date: string, upiName?: string, transferToAccountId?: string) => {
@@ -302,7 +310,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{
       ...state, masterBalance, depositToMaster, createSubAccount, transferToSubAccount,
       transferBetweenAccounts, transferToMainAccount, bookExpense, deleteSubAccount,
-      getAccountLedger, setOnHighValueExpense, createVendor, deleteVendor, bookScrapSale,
+      getAccountLedger, setOnHighValueExpense, setOnHighValueScrap, createVendor, deleteVendor, bookScrapSale,
       recordVendorPayment, getVendorLedger,
     }}>
       {children}
