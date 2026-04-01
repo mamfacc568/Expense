@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, FileText, Settings, Bell, IndianRupee, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, Settings, Bell, IndianRupee, Menu, X, Recycle } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { NotificationProvider, useNotification, NotificationPanel } from './context/NotificationContext';
 import { MasterDashboard } from './components/MasterDashboard';
@@ -9,10 +9,11 @@ import { ExpenseForm } from './components/ExpenseForm';
 import { ReconciliationView } from './components/ReconciliationView';
 import { ExpenseHistoryView } from './components/ExpenseHistoryView';
 import { AccountLedgerView } from './components/AccountLedgerView';
+import { ScrapView } from './components/ScrapView';
 import type { SubAccount } from './types';
 import './styles/design-system.css';
 
-type View = 'dashboard' | 'reconciliation' | 'expenses' | 'account-ledger';
+type View = 'dashboard' | 'reconciliation' | 'expenses' | 'scrap' | 'account-ledger';
 type ModalType = 'create' | 'transfer' | 'deposit' | 'expense' | null;
 
 function AppContent() {
@@ -55,6 +56,7 @@ function AppContent() {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'reconciliation', label: 'Reconciliation', icon: FileText },
     { id: 'expenses', label: 'Expenses', icon: IndianRupee },
+    { id: 'scrap', label: 'Scrap', icon: Recycle },
   ] as const;
 
   const handleBackToDashboard = () => {
@@ -193,7 +195,8 @@ function AppContent() {
                   }}>
                     {item.id === 'dashboard' ? 'Overview & Analytics' :
                      item.id === 'reconciliation' ? 'Transaction History' :
-                     'Expense Records'}
+                     item.id === 'expenses' ? 'Expense Records' :
+                     'Scrap Sales & Vendors'}
                   </span>
                 </div>
                 {currentView === item.id && (
@@ -439,6 +442,7 @@ function AppContent() {
                 {currentView === 'dashboard' ? 'Dashboard' :
                  currentView === 'account-ledger' ? 'Account Details' :
                  currentView === 'expenses' ? 'Expenses' :
+                 currentView === 'scrap' ? 'Scrap' :
                  'Reconciliation'}
               </h1>
 
@@ -552,6 +556,16 @@ function AppContent() {
               transition={{ duration: 0.3 }}
             >
               <ExpenseHistoryView />
+            </motion.div>
+          ) : currentView === 'scrap' ? (
+            <motion.div
+              key="scrap"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ScrapView />
             </motion.div>
           ) : (
             <motion.div
