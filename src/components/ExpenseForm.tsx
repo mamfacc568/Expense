@@ -27,14 +27,19 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [imageName, setImageName] = useState('');
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
-  const allCategories = [
+  const defaultCategories = [
     'Supplies', 'Travel', 'Meals', 'Equipment', 'Software',
     'Services', 'Utilities', 'Rent', 'Marketing', 'Other'
   ];
+
+  const allCategories = [...defaultCategories, ...customCategories];
 
   // Auto-select account when selectedAccount changes or modal opens
   useEffect(() => {
@@ -58,7 +63,13 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
       return;
     }
 
-    bookExpense(accountId, description, parsedAmount, category, date, imageUrl);
+    const finalCategory = showCustomCategory ? customCategory : category;
+    
+    if (showCustomCategory && customCategory && !customCategories.includes(customCategory)) {
+      setCustomCategories(prev => [...prev, customCategory]);
+    }
+
+    bookExpense(accountId, description, parsedAmount, finalCategory, date, imageUrl);
     resetForm();
     onClose();
   };
@@ -67,6 +78,8 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
     setDescription('');
     setAmount('');
     setCategory('');
+    setCustomCategory('');
+    setShowCustomCategory(false);
     setDate(new Date().toISOString().split('T')[0]);
     setImageUrl(undefined);
     setImageName('');
@@ -246,29 +259,79 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                       <Tag size={16} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
                       Category
                     </label>
-                    <select
-                      id="category"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      required
-                      style={{
-                        width: '100%',
-                        padding: 'var(--spacing-sm) var(--spacing-md)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: '0.875rem',
-                        fontFamily: 'var(--font-family)',
-                        backgroundColor: 'var(--surface)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <option value="">Select category...</option>
-                      {allCategories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
+                    {!showCustomCategory ? (
+                      <>
+                        <select
+                          id="category"
+                          value={category}
+                          onChange={(e) => {
+                            if (e.target.value === '__custom__') {
+                              setShowCustomCategory(true);
+                              setCategory('');
+                            } else {
+                              setCategory(e.target.value);
+                            }
+                          }}
+                          required={!showCustomCategory}
+                          style={{
+                            width: '100%',
+                            padding: 'var(--spacing-sm) var(--spacing-md)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.875rem',
+                            fontFamily: 'var(--font-family)',
+                            backgroundColor: 'var(--surface)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="">Select category...</option>
+                          {allCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                          <option value="__custom__">+ Add New Category</option>
+                        </select>
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                        <input
+                          type="text"
+                          value={customCategory}
+                          onChange={(e) => setCustomCategory(e.target.value)}
+                          placeholder="Enter new category..."
+                          required
+                          autoFocus
+                          style={{
+                            flex: 1,
+                            padding: 'var(--spacing-sm) var(--spacing-md)',
+                            border: '1px solid var(--primary-green)',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.875rem',
+                            fontFamily: 'var(--font-family)',
+                            outline: 'none',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCustomCategory(false);
+                            setCustomCategory('');
+                          }}
+                          style={{
+                            padding: 'var(--spacing-sm)',
+                            background: 'var(--background)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -636,7 +636,6 @@ function AppContent() {
         isOpen={activeModal === 'expense'}
         onClose={() => {
           setActiveModal(null);
-          setSelectedAccount(null);
         }}
         selectedAccount={selectedAccount || undefined}
       />

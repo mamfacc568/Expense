@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2, AlertTriangle, X, ArrowUpRight, ArrowDownLeft, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, AlertTriangle, X, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, ZoomIn } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import type { SubAccount, LedgerEntry } from '../types';
 
@@ -18,6 +18,7 @@ export function AccountLedgerView({ account, onBack, onExpense }: AccountLedgerV
   const [transferTarget, setTransferTarget] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -581,8 +582,33 @@ export function AccountLedgerView({ account, onBack, onExpense }: AccountLedgerV
               {selectedEntry.imageUrl && (
                 <div>
                   <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Receipt</p>
-                  <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <div 
+                    onClick={() => setZoomedImage(selectedEntry.imageUrl!)}
+                    style={{ 
+                      borderRadius: 'var(--radius-md)', 
+                      overflow: 'hidden', 
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      position: 'relative',
+                    }}
+                  >
                     <img src={selectedEntry.imageUrl} alt="Receipt" style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', display: 'block' }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      right: '8px',
+                      background: 'rgba(0,0,0,0.6)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '4px 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: 'white',
+                      fontSize: '0.7rem',
+                    }}>
+                      <ZoomIn size={14} />
+                      Tap to view
+                    </div>
                   </div>
                 </div>
               )}
@@ -629,6 +655,62 @@ export function AccountLedgerView({ account, onBack, onExpense }: AccountLedgerV
               </div>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Fullscreen Image Viewer */}
+      {zoomedImage && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            zIndex: 2000, 
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+          }}
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            onClick={() => setZoomedImage(null)}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 'var(--radius-full)',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 2001,
+            }}
+          >
+            <X size={24} color="white" />
+          </button>
+          <img 
+            src={zoomedImage} 
+            alt="Receipt Full View" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              maxWidth: '95vw', 
+              maxHeight: '90vh', 
+              objectFit: 'contain',
+              borderRadius: 'var(--radius-md)',
+            }} 
+          />
+          <p style={{ 
+            color: 'rgba(255,255,255,0.7)', 
+            fontSize: '0.8rem', 
+            marginTop: '12px',
+          }}>
+            Tap anywhere to close
+          </p>
         </div>
       )}
     </div>
