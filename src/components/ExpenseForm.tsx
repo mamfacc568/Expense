@@ -33,6 +33,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [imageName, setImageName] = useState('');
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 400);
 
   const defaultCategories = [
     'Supplies', 'Travel', 'Meals', 'Equipment', 'Software',
@@ -233,7 +234,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                 )}
 
                 {/* Date and Category */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
                   <div>
                     <label className="label" htmlFor="expenseDate">
                       Date
@@ -294,7 +295,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                         </select>
                       </>
                     ) : (
-                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
                         <input
                           type="text"
                           value={customCategory}
@@ -304,12 +305,14 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                           autoFocus
                           style={{
                             flex: 1,
+                            minWidth: 0,
                             padding: 'var(--spacing-sm) var(--spacing-md)',
                             border: '1px solid var(--primary-green)',
                             borderRadius: 'var(--radius-md)',
                             fontSize: '0.875rem',
                             fontFamily: 'var(--font-family)',
                             outline: 'none',
+                            boxSizing: 'border-box',
                           }}
                         />
                         <button
@@ -326,6 +329,8 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
                           }}
                         >
                           <X size={16} />

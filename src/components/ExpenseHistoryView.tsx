@@ -26,7 +26,9 @@ export function ExpenseHistoryView() {
     'Services', 'Utilities', 'Rent', 'Marketing', 'Other'
   ];
 
-  const allCategories = [...defaultCategories];
+  // Get unique categories from actual expenses (including custom ones)
+  const expenseCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))];
+  const allCategories = [...new Set([...defaultCategories, ...expenseCategories])].sort();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
