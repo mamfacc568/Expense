@@ -1,6 +1,6 @@
 import { createContext, useContext, useReducer, useState, type ReactNode } from 'react';
 import type { AppState, SubAccount, Expense, Transaction, LedgerEntry, Vendor, ScrapSale, VendorPayment, VendorLedgerEntry } from '../types';
-import { sendExpenseNotification, sendDepositNotification } from '../services/whatsappService';
+import { sendExpenseNotification, sendDepositNotification, sendScrapSaleNotification, sendScrapPaymentNotification } from '../services/whatsappService';
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
 
@@ -259,16 +259,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const bookExpense = (accountId: string, description: string, amount: number, category: string, date: string, imageUrl?: string) => {
     if (amount > 0 && description.trim()) {
       const targetAccount = state.subAccounts.find(a => a.id === accountId);
+      
+      // App notification for high value
       if (amount >= 10000 && onHighValueExpense && targetAccount) onHighValueExpense(amount, description, targetAccount.name);
       
-      // Send WhatsApp notification
-      if (targetAccount) {
+      // WhatsApp notification only if amount >= 10000
+      if (amount >= 10000 && targetAccount) {
         sendExpenseNotification({
           amount,
           description: description.trim(),
           accountName: targetAccount.name,
           date: date || new Date().toLocaleDateString('en-IN'),
           category,
+          imageUrl,
         });
       }
       
@@ -308,7 +311,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const bookScrapSale = (vendorId: string, description: string, amount: number, date: string, weight?: number, rate?: number, imageUrl?: string) => {
     if (amount > 0 && description.trim()) {
       const vendor = state.vendors.find(v => v.id === vendorId);
+      
+      // App notification for high value
       if (amount >= 10000 && onHighValueScrap && vendor) onHighValueScrap(amount, vendor.name);
+      
+      // WhatsApp notification only if amount >= 10000
+      if (amount >= 10000 && vendor) {
+        sendScrapSaleNotification({
+          amount,
+          vendorName: vendor.name,
+          date: date || new Date().toLocaleDateString('en-IN'),
+          imageUrl,
+        });
+      }
+      
       dispatch({ type: 'BOOK_SCRAP_SALE', payload: { id: generateId(), vendorId, description: description.trim(), amount, date, weight, rate, imageUrl, createdAt: new Date() } });
     }
   };
@@ -317,6 +333,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (amount <= 0) return;
     const vendor = state.vendors.find(v => v.id === vendorId);
     if (!vendor || vendor.balance < amount) { alert('Insufficient vendor balance'); return; }
+    
+    // Send WhatsApp notification for all scrap payments
+    sendScrapPaymentNotification({
+      amount,
+      vendorName: vendor.name,
+      paymentMethod,
+      upiName: paymentMethod === 'upi' ? upiName : undefined,
+      date: date || new Date().toLocaleDateString('en-IN'),
+    });
+    
     dispatch({ type: 'RECORD_VENDOR_PAYMENT', payload: { payment: { id: generateId(), vendorId, amount, paymentMethod, upiName, description: description.trim(), date, createdAt: new Date() }, transferToAccountId } });
   };
 
