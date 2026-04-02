@@ -315,8 +315,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // App notification for high value
       if (amount >= 10000 && onHighValueScrap && vendor) onHighValueScrap(amount, vendor.name);
       
-      // WhatsApp notification only if amount >= 10000
-      if (amount >= 10000 && vendor) {
+      // WhatsApp notification for EVERY scrap sale with image
+      if (vendor) {
         sendScrapSaleNotification({
           amount,
           vendorName: vendor.name,
