@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, Image as ImageIcon, Tag, FileText, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { uploadToCloudinary } from '../services/cloudinaryService';
 import type { SubAccount } from '../types';
 
 interface ExpenseFormProps {
@@ -32,8 +33,10 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [imageName, setImageName] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 400);
+  const [isMobile] = useState(window.innerWidth < 400);
 
   const defaultCategories = [
     'Supplies', 'Travel', 'Meals', 'Equipment', 'Software',
@@ -49,7 +52,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
     }
   }, [selectedAccount, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
     const account = subAccounts.find(a => a.id === accountId);
@@ -70,7 +73,15 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
       setCustomCategories(prev => [...prev, customCategory]);
     }
 
-    bookExpense(accountId, description, parsedAmount, finalCategory, date, imageUrl);
+    // Upload image to Cloudinary if exists
+    let cloudinaryUrl: string | undefined;
+    if (imageFile) {
+      setIsUploading(true);
+      cloudinaryUrl = await uploadToCloudinary(imageFile) || undefined;
+      setIsUploading(false);
+    }
+
+    bookExpense(accountId, description, parsedAmount, finalCategory, date, cloudinaryUrl);
     resetForm();
     onClose();
   };
@@ -84,6 +95,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
     setDate(new Date().toISOString().split('T')[0]);
     setImageUrl(undefined);
     setImageName('');
+    setImageFile(null);
     if (!selectedAccount) {
       setAccountId('');
     }
@@ -95,6 +107,7 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
       const objectUrl = URL.createObjectURL(file);
       setImageUrl(objectUrl);
       setImageName(file.name);
+      setImageFile(file);
     }
   };
 
@@ -527,24 +540,25 @@ export function ExpenseForm({ isOpen, onClose, selectedAccount }: ExpenseFormPro
 
                 <button
                   type="submit"
+                  disabled={isUploading}
                   className="btn btn-primary"
                   style={{
                     width: '100%',
                     padding: 'var(--spacing-md)',
-                    background: 'var(--primary-green)',
+                    background: isUploading ? 'var(--text-muted)' : 'var(--primary-green)',
                     color: 'white',
                     border: 'none',
                     borderRadius: 'var(--radius-md)',
                     fontWeight: 600,
                     fontSize: '0.938rem',
-                    cursor: 'pointer',
+                    cursor: isUploading ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 'var(--spacing-sm)',
                   }}
                 >
-                  Book Expense
+                  {isUploading ? 'Uploading...' : 'Book Expense'}
                 </button>
               </form>
             </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, AlertTriangle, X, Recycle, ArrowUpRight, ArrowDownLeft, Smartphone, Banknote, Upload, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { uploadToCloudinary } from '../services/cloudinaryService';
 import type { Vendor } from '../types';
 
 export function ScrapView() {
@@ -18,6 +19,8 @@ export function ScrapView() {
   const [saleAmount, setSaleAmount] = useState('');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [saleImageUrl, setSaleImageUrl] = useState<string | undefined>();
+  const [saleImageFile, setSaleImageFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Payment Form State
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -58,15 +61,25 @@ export function ScrapView() {
     }
   };
 
-  const handleSaleSubmit = (e: React.FormEvent) => {
+  const handleSaleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVendor) return;
     const parsedAmount = parseFloat(saleAmount);
     if (parsedAmount <= 0) { alert('Enter valid amount'); return; }
-    bookScrapSale(selectedVendor.id, `Scrap sold to ${selectedVendor.name}`, parsedAmount, saleDate, undefined, undefined, saleImageUrl);
+
+    // Upload image to Cloudinary if exists
+    let cloudinaryUrl: string | undefined;
+    if (saleImageFile) {
+      setIsUploading(true);
+      cloudinaryUrl = await uploadToCloudinary(saleImageFile) || undefined;
+      setIsUploading(false);
+    }
+
+    bookScrapSale(selectedVendor.id, `Scrap sold to ${selectedVendor.name}`, parsedAmount, saleDate, undefined, undefined, cloudinaryUrl);
     setSaleAmount('');
     setSaleDate(new Date().toISOString().split('T')[0]);
     setSaleImageUrl(undefined);
+    setSaleImageFile(null);
     setShowSaleForm(false);
   };
 
@@ -87,7 +100,10 @@ export function ScrapView() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (url?: string) => void) => {
     const file = e.target.files?.[0];
-    if (file) setter(URL.createObjectURL(file));
+    if (file) {
+      setter(URL.createObjectURL(file));
+      setSaleImageFile(file);
+    }
   };
 
   // Vendor Ledger View
@@ -239,7 +255,7 @@ export function ScrapView() {
                       )}
                     </div>
                   </div>
-                  <button type="submit" style={{ width: '100%', padding: '12px', background: '#F59E0B', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>Book Scrap Sale</button>
+                  <button type="submit" disabled={isUploading} style={{ width: '100%', padding: '12px', background: isUploading ? '#9CA3AF' : '#F59E0B', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem', cursor: isUploading ? 'not-allowed' : 'pointer' }}>{isUploading ? 'Uploading...' : 'Book Scrap Sale'}</button>
                 </form>
               </div>
             </motion.div>
